@@ -1,3 +1,4 @@
+import ListingPhoto from '../components/ListingPhoto.jsx';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { IncomingOffers } from '../components/Proposals.jsx';
@@ -112,7 +113,7 @@ function MyListings() {
               {/* Thumbnail */}
               <div className="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {item.image_url ? (
-                  <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+                  <ListingPhoto src={item.image_url} title={item.title} />
                 ) : (
                   <span className="text-2xl">{categoryIcons[item.category] || '📦'}</span>
                 )}

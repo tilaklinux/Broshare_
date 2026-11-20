@@ -1,3 +1,4 @@
+import ListingPhoto from './ListingPhoto.jsx';
 import { OfferForm } from './Proposals.jsx';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -47,15 +48,15 @@ function ItemCard({ item }) {
       {/* Image Area */}
       <div className="relative h-44 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden">
         {item.image_url ? (
-          <img src={item.image_url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          <ListingPhoto src={item.image_url} title={item.title} />
         ) : (
           <div className="text-5xl opacity-60">{categoryIcons[item.category] || '📦'}</div>
         )}
-        <span className={`absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-semibold ${categoryColors[item.category] || categoryColors.Other}`}>
+        <span className={`pointer-events-none absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-semibold ${categoryColors[item.category] || categoryColors.Other}`}>
           {item.category}
         </span>
         {item.status === 'bartered' && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+          <div className="pointer-events-none absolute inset-0 bg-black/50 flex items-center justify-center">
             <span className="bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-bold">BARTERED</span>
           </div>
         )}
