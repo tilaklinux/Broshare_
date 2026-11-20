@@ -26,7 +26,7 @@ function Register() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/register', {
+      const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -39,24 +39,7 @@ function Register() {
         setError(data.message || 'Registration failed');
       }
     } catch {
-      // Demo mode: register locally
-      if (!form.name || !form.email || !form.password) {
-        setError('Please fill in all required fields');
-        setLoading(false);
-        return;
-      }
-      const registeredUsers = JSON.parse(localStorage.getItem('hostelbarter_registered_users') || '[]');
-      if (registeredUsers.find(u => u.email === form.email)) {
-        setError('Email already registered');
-        setLoading(false);
-        return;
-      }
-      const newUser = { id: Date.now(), ...form };
-      registeredUsers.push(newUser);
-      localStorage.setItem('hostelbarter_registered_users', JSON.stringify(registeredUsers));
-      const { password: _, ...userData } = newUser;
-      login(userData, 'demo_token_' + Date.now());
-      navigate('/');
+      setError('Could not contact the server. Please try again.');
     }
     setLoading(false);
   };

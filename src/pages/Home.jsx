@@ -1,26 +1,27 @@
 import { useState, useEffect } from 'react';
 import ItemCard from '../components/ItemCard.jsx';
-import { getMockItems, CATEGORIES } from '../utils/mockData.js';
+import { CATEGORIES } from '../utils/mockData.js';
 
 function Home() {
   const [items, setItems] = useState([]);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
+  const [error,setError] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Try to fetch from backend API first, fall back to mock data
     const fetchItems = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/items');
+        const res = await fetch('/api/items');
         if (res.ok) {
           const data = await res.json();
           setItems(data.filter(i => i.status === 'available'));
         } else {
-          setItems(getMockItems().filter(i => i.status === 'available'));
+          setError('Could not load listings. Please retry.');
         }
       } catch {
-        setItems(getMockItems().filter(i => i.status === 'available'));
+        setError('Could not load listings. Please retry.');
       }
       setLoading(false);
     };
@@ -44,6 +45,7 @@ function Home() {
 
   return (
     <div>
+      {error && <p role="alert">{error}</p>}
       {/* Hero Section */}
       <div className="text-center mb-8 pt-4">
         <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-3">

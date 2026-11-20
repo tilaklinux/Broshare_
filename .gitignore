@@ -5,3 +5,5 @@ build/
 *.log
 backend/.env .env
 backend/.env
+backend/uploads/*
+!backend/uploads/.gitkeep

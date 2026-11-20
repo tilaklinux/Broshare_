@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
-import { CATEGORIES, getMockItems, saveMockItems } from '../utils/mockData.js';
+import { CATEGORIES } from '../utils/mockData.js';
 
 function PostItem() {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     title: '', description: '', category: 'Books', looking_for: '', image_url: ''
@@ -21,13 +19,15 @@ function PostItem() {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
+        e.target.value = '';
+        setImagePreview('');
         setError('Image must be less than 5MB');
         return;
       }
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
-        setForm({ ...form, image_url: reader.result });
+
       };
       reader.readAsDataURL(file);
     }
@@ -37,16 +37,6 @@ function PostItem() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
-    const itemData = {
-      ...form,
-      user_id: user.id,
-      user_name: user.name,
-      hostel_name: user.hostel_name,
-      room_number: user.room_number,
-      status: 'available',
-      created_at: new Date().toISOString(),
-    };
 
     try {
       const formData = new FormData();
@@ -58,7 +48,7 @@ function PostItem() {
         formData.append('image', e.target.image.files[0]);
       }
 
-      const res = await fetch('http://localhost:5000/api/items', {
+      const res = await fetch('/api/items', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('hostelbarter_token')}` },
         body: formData,
@@ -69,12 +59,7 @@ function PostItem() {
         throw new Error('API failed');
       }
     } catch {
-      // Demo mode: save locally
-      const items = getMockItems();
-      itemData.id = Date.now();
-      items.unshift(itemData);
-      saveMockItems(items);
-      navigate('/my-listings');
+      setError('Listing was not posted. Check the image format, your connection and login, then retry.');
     }
     setLoading(false);
   };
@@ -105,7 +90,7 @@ function PostItem() {
             <div>
               <label className="btn-secondary text-sm cursor-pointer inline-block">
                 Choose Image
-                <input type="file" name="image" accept="image/*" onChange={handleImageChange} className="hidden" />
+                <input type="file" name="image" accept="image/jpeg,image/png,image/gif,image/webp" onChange={handleImageChange} className="hidden" />
               </label>
               <p className="text-xs text-gray-400 mt-1">JPG, PNG up to 5MB</p>
             </div>

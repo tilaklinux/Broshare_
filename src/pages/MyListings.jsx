@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { getMockItems, saveMockItems } from '../utils/mockData.js';
+import { IncomingOffers } from '../components/Proposals.jsx';
 
 const categoryIcons = {
   Books: '📚', Electronics: '🔌', Accessories: '🎒', Essentials: '🏠', Other: '📦',
@@ -9,11 +9,12 @@ const categoryIcons = {
 function MyListings() {
   const { user } = useAuth();
   const [items, setItems] = useState([]);
+  const [error,setError] = useState('');
   const [loading, setLoading] = useState(true);
 
   const fetchItems = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/items/my-items', {
+      const res = await fetch('/api/items/my-items', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('hostelbarter_token')}` }
       });
       if (res.ok) {
@@ -23,8 +24,7 @@ function MyListings() {
         throw new Error('API failed');
       }
     } catch {
-      const allItems = getMockItems();
-      setItems(allItems.filter(i => i.user_id === user.id));
+      setError('Could not contact the server. Please try again.');
     }
     setLoading(false);
   };
@@ -33,7 +33,7 @@ function MyListings() {
 
   const markAsBartered = async (itemId) => {
     try {
-      await fetch(`http://localhost:5000/api/items/${itemId}/status`, {
+      const res = await fetch(`/api/items/${itemId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -41,18 +41,16 @@ function MyListings() {
         },
         body: JSON.stringify({ status: 'bartered' }),
       });
+      if (!res.ok) throw new Error();
     } catch {
-      // Demo mode
-      const allItems = getMockItems();
-      const updated = allItems.map(i => i.id === itemId ? { ...i, status: 'bartered' } : i);
-      saveMockItems(updated);
+      setError('Listing could not be updated.');
     }
     fetchItems();
   };
 
   const markAsAvailable = async (itemId) => {
     try {
-      await fetch(`http://localhost:5000/api/items/${itemId}/status`, {
+      const res = await fetch(`/api/items/${itemId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -60,10 +58,9 @@ function MyListings() {
         },
         body: JSON.stringify({ status: 'available' }),
       });
+      if (!res.ok) throw new Error();
     } catch {
-      const allItems = getMockItems();
-      const updated = allItems.map(i => i.id === itemId ? { ...i, status: 'available' } : i);
-      saveMockItems(updated);
+      setError('Listing could not be updated.');
     }
     fetchItems();
   };
@@ -71,13 +68,13 @@ function MyListings() {
   const deleteItem = async (itemId) => {
     if (!confirm('Are you sure you want to delete this listing?')) return;
     try {
-      await fetch(`http://localhost:5000/api/items/${itemId}`, {
+      const res = await fetch(`/api/items/${itemId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('hostelbarter_token')}` }
       });
+      if (!res.ok) throw new Error();
     } catch {
-      const allItems = getMockItems();
-      saveMockItems(allItems.filter(i => i.id !== itemId));
+      setError('Listing could not be updated.');
     }
     fetchItems();
   };
@@ -99,6 +96,8 @@ function MyListings() {
         </div>
       </div>
 
+      {error && <p role="alert">{error}</p>}
+      <IncomingOffers onChange={fetchItems} />
       {items.length === 0 ? (
         <div className="card p-12 text-center">
           <div className="text-6xl mb-4">📦</div>

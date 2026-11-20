@@ -22,7 +22,7 @@ function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -35,21 +35,7 @@ function Login() {
         setError(data.message || 'Login failed');
       }
     } catch {
-      // Demo mode: simulate login
-      const mockUsers = JSON.parse(localStorage.getItem('hostelbarter_registered_users') || '[]');
-      const found = mockUsers.find(u => u.email === email);
-      if (found && found.password === password) {
-        const { password: _, ...userData } = found;
-        login(userData, 'demo_token_' + Date.now());
-        navigate('/');
-      } else if (email && password) {
-        // Auto-create demo account
-        const demoUser = { id: Date.now(), name: email.split('@')[0], email, hostel_name: 'Demo Hostel', room_number: '101' };
-        login(demoUser, 'demo_token_' + Date.now());
-        navigate('/');
-      } else {
-        setError('Please enter email and password');
-      }
+      setError('Could not contact the server. Please try again.');
     }
     setLoading(false);
   };
@@ -107,7 +93,7 @@ function Login() {
 
           <div className="border-t border-gray-100 pt-4">
             <p className="text-xs text-gray-400 text-center">
-              💡 Demo mode: Enter any email & password to explore the app
+              Use your registered student account to sign in.
             </p>
           </div>
         </form>

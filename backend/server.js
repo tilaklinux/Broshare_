@@ -7,6 +7,7 @@ import { dirname, join } from 'path';
 import authRoutes from './routes/auth.js';
 import itemRoutes from './routes/items.js';
 import messageRoutes from './routes/messages.js';
+import proposals from "./routes/proposals.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use("/uploads", express.static(join(__dirname, "uploads")));
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/proposals", proposals);
 app.use("/api/items", itemRoutes);
 app.use('/api/messages', messageRoutes);
 

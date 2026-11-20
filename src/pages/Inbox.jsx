@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import { getMockMessages, getMockUsers, getDemoUser } from '../utils/mockData.js';
 
 function Inbox() {
   const { user } = useAuth();
   const [conversations, setConversations] = useState([]);
+  const [error,setError] = useState('');
   const [loading, setLoading] = useState(true);
 
   const fetchConversations = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/messages/conversations', {
+      const res = await fetch('/api/messages/conversations', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('hostelbarter_token')}` }
       });
       if (res.ok) {
@@ -20,27 +20,7 @@ function Inbox() {
         throw new Error('API failed');
       }
     } catch {
-      // Demo mode: build conversations from mock data
-      const messages = getMockMessages();
-      const users = getMockUsers();
-      const userMsgs = messages.filter(m => m.sender_id === user.id || m.receiver_id === user.id);
-      
-      const convMap = {};
-      userMsgs.forEach(msg => {
-        const otherId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
-        if (!convMap[otherId] || new Date(msg.created_at) > new Date(convMap[otherId].created_at)) {
-          const otherUser = users.find(u => u.id === otherId) || getDemoUser(otherId) || { name: 'Unknown', hostel_name: '', room_number: '' };
-          convMap[otherId] = {
-            user_id: otherId,
-            name: otherUser.name,
-            hostel_name: otherUser.hostel_name,
-            room_number: otherUser.room_number,
-            last_message: msg.content,
-            created_at: msg.created_at,
-          };
-        }
-      });
-      setConversations(Object.values(convMap).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+      setError('Could not contact the server. Please try again.');
     }
     setLoading(false);
   };
@@ -57,6 +37,7 @@ function Inbox() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      {error && <p role="alert">{error}</p>}
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-gray-900">Inbox</h1>
         <p className="text-gray-500 mt-1">Your conversations with other students</p>
