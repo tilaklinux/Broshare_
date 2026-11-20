@@ -1,18 +1,22 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 
 function Register() {
   const [form, setForm] = useState({
-    name: '', email: '', password: '', hostel_name: '', room_number: ''
+    name: "",
+    email: "",
+    password: "",
+    hostel_name: "",
+    room_number: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login, user } = useAuth();
   const navigate = useNavigate();
 
   if (user) {
-    navigate('/');
+    navigate("/");
     return null;
   }
 
@@ -22,24 +26,24 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
       const data = await res.json();
       if (res.ok) {
         login(data.user, data.token);
-        navigate('/');
+        navigate("/");
       } else {
-        setError(data.message || 'Registration failed');
+        setError(data.message || "Registration failed");
       }
     } catch {
-      setError('Could not contact the server. Please try again.');
+      setError("Could not contact the server. Please try again.");
     }
     setLoading(false);
   };
@@ -51,8 +55,12 @@ function Register() {
           <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <span className="text-3xl">🎓</span>
           </div>
-          <h2 className="text-3xl font-extrabold text-gray-900">Join HostelBarter</h2>
-          <p className="text-gray-500 mt-2">Create your account to start bartering</p>
+          <h2 className="text-3xl font-extrabold text-gray-900">
+            Join HostelBarter
+          </h2>
+          <p className="text-gray-500 mt-2">
+            Create your account to start bartering
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="card p-8 space-y-4">
@@ -63,38 +71,97 @@ function Register() {
           )}
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name *</label>
-            <input type="text" name="name" value={form.name} onChange={handleChange} className="input-field" placeholder="Arjun Mehta" required />
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              Full Name *
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              className="input-field"
+              placeholder="Arjun Mehta"
+              required
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email *</label>
-            <input type="email" name="email" value={form.email} onChange={handleChange} className="input-field" placeholder="you@college.edu" required />
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              Email *
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              className="input-field"
+              placeholder="you@college.edu"
+              required
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password *</label>
-            <input type="password" name="password" value={form.password} onChange={handleChange} className="input-field" placeholder="••••••••" required />
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              Password *
+            </label>
+            <input
+              type="password"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              className="input-field"
+              placeholder="••••••••"
+              required
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Hostel Name *</label>
-              <input type="text" name="hostel_name" value={form.hostel_name} onChange={handleChange} className="input-field" placeholder="Tagore Hostel" required />
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Hostel Name *
+              </label>
+              <input
+                type="text"
+                name="hostel_name"
+                value={form.hostel_name}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="Tagore Hostel"
+                required
+              />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Room No. *</label>
-              <input type="text" name="room_number" value={form.room_number} onChange={handleChange} className="input-field" placeholder="204" required />
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Room No. *
+              </label>
+              <input
+                type="text"
+                name="room_number"
+                value={form.room_number}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="204"
+                required
+              />
             </div>
           </div>
 
-          <button type="submit" disabled={loading} className="btn-primary w-full text-center mt-2">
-            {loading ? 'Creating account...' : 'Create Account'}
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary w-full text-center mt-2"
+          >
+            {loading ? "Creating account..." : "Create Account"}
           </button>
 
           <p className="text-center text-sm text-gray-500">
-            Already have an account?{' '}
-            <Link to="/login" className="text-emerald-600 font-semibold hover:underline">Login</Link>
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="text-emerald-600 font-semibold hover:underline"
+            >
+              Login
+            </Link>
           </p>
         </form>
       </div>
