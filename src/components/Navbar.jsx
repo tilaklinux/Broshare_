@@ -48,6 +48,7 @@ function Navbar() {
                 >
                   My Listings
                 </Link>
+                <Link to="/trades" className="btn-secondary text-sm">Trades</Link>
                 <Link
                   to="/inbox"
                   className="btn-secondary text-sm hidden sm:inline-flex items-center gap-1.5"

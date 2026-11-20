@@ -68,7 +68,7 @@ router.get('/my-items', authenticateToken, async (req, res) => {
       SELECT items.*, users.name AS user_name, users.hostel_name, users.room_number
       FROM items
       JOIN users ON items.user_id = users.id
-      WHERE items.user_id = ?
+      WHERE items.user_id = ? AND items.status <> 'deleted'
       ORDER BY items.created_at DESC
     `, [req.user.id]);
     res.json(rows);
@@ -109,51 +109,38 @@ router.post('/', authenticateToken, upload.single('image'), async (req, res) => 
 // PUT /api/items/:id/status
 // Update item status (available/bartered)
 // ============================================
-router.put('/:id/status', authenticateToken, async (req, res) => {
+// Keep resolved proposals readable. Removing a listing hides it rather than
+// cascading a delete through its history. Invalidate pending offers atomically.
+async function changeStatus(req, res, status) {
+  let connection;
   try {
-    const { status } = req.body;
-    if (!['available', 'bartered'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status' });
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    const id = req.params.id;
+    const [[item]] = await connection.query('SELECT user_id,status FROM items WHERE id=? FOR UPDATE', [id]);
+    if (!item || item.status === 'deleted' || item.user_id !== req.user.id) {
+      await connection.rollback();
+      return res.status(404).json({ message: 'Listing not found for this account' });
     }
-
-    // Verify ownership
-    const [item] = await db.query('SELECT user_id FROM items WHERE id = ?', [req.params.id]);
-    if (item.length === 0) {
-      return res.status(404).json({ message: 'Item not found' });
+    await connection.query('UPDATE items SET status=? WHERE id=?', [status,id]);
+    if (status !== 'available') {
+      await connection.query(`UPDATE barter_requests SET status='rejected' WHERE status='pending'
+        AND (target_item_id=? OR offered_item_id=?)`, [id,id]);
     }
-    if (item[0].user_id !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized to update this item' });
-    }
-
-    await db.query('UPDATE items SET status = ? WHERE id = ?', [status, req.params.id]);
-    res.json({ message: `Item marked as ${status}` });
+    await connection.commit();
+    res.json({ message: `Listing marked as ${status}` });
   } catch (err) {
-    console.error('Update status error:', err);
-    res.status(500).json({ message: 'Server error updating item status' });
-  }
-});
+    if (connection) await connection.rollback();
+    console.error('Listing update failed:', err);
+    res.status(500).json({ message: 'Could not update listing. Please retry.' });
+  } finally { connection?.release(); }
+}
 
-// ============================================
-// DELETE /api/items/:id
-// Delete an item listing
-// ============================================
-router.delete('/:id', authenticateToken, async (req, res) => {
-  try {
-    // Verify ownership
-    const [item] = await db.query('SELECT user_id FROM items WHERE id = ?', [req.params.id]);
-    if (item.length === 0) {
-      return res.status(404).json({ message: 'Item not found' });
-    }
-    if (item[0].user_id !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized to delete this item' });
-    }
-
-    await db.query('DELETE FROM items WHERE id = ?', [req.params.id]);
-    res.json({ message: 'Item deleted successfully' });
-  } catch (err) {
-    console.error('Delete item error:', err);
-    res.status(500).json({ message: 'Server error deleting item' });
-  }
+router.put('/:id/status', authenticateToken, (req, res) => {
+  const {status} = req.body;
+  if (!['available','bartered'].includes(status)) return res.status(400).json({message:'Invalid status'});
+  return changeStatus(req, res, status);
 });
+router.delete('/:id', authenticateToken, (req,res) => changeStatus(req,res,'deleted'));
 
 export default router;
