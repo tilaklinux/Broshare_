@@ -1,14 +1,14 @@
-import mysql from 'mysql2/promise';
-import dotenv from 'dotenv';
+import mysql from "mysql2/promise";
+import dotenv from "dotenv";
 
 dotenv.config();
 
 // Create a connection pool for better performance
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'hostelbarter',
+  host: process.env.DB_HOST || "localhost",
+  user: process.env.DB_USER || "nodeuser",
+  password: process.env.DB_PASSWORD || "",
+  database: process.env.DB_NAME || "broshare",
   port: process.env.DB_PORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
@@ -19,11 +19,13 @@ const pool = mysql.createPool({
 async function testConnection() {
   try {
     const connection = await pool.getConnection();
-    console.log('✅ MySQL connected successfully');
+    console.log(" MySQL connected successfully");
     connection.release();
   } catch (err) {
-    console.error('❌ MySQL connection failed:', err.message);
-    console.log('Make sure MySQL is running and credentials are correct in .env file');
+    console.error("❌ MySQL connection failed:", err.message);
+    console.log(
+      "Make sure MySQL is running and credentials are correct in .env file",
+    );
   }
 }
 

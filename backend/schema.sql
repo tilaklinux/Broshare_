@@ -3,8 +3,8 @@
 -- Run this SQL in your MySQL database to set up
 -- ============================================
 
-CREATE DATABASE IF NOT EXISTS hostelbarter;
-USE hostelbarter;
+CREATE DATABASE IF NOT EXISTS broshare;
+USE broshare;
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
