@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS items (
   category ENUM('Books', 'Electronics', 'Accessories', 'Essentials', 'Other') NOT NULL,
   looking_for VARCHAR(255) NOT NULL,
   image_url VARCHAR(500) DEFAULT NULL,
-  status ENUM('available', 'bartered') DEFAULT 'available',
+  status ENUM('available', 'bartered', 'deleted') DEFAULT 'available',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS barter_requests (
  requester_id INT NOT NULL,
  kind ENUM('item','cash','free') NOT NULL,
  amount DECIMAL(10,2),
- status ENUM('pending','accepted','rejected') NOT NULL DEFAULT 'pending',
+ status ENUM('pending','accepted','rejected','withdrawn') NOT NULL DEFAULT 'pending',
  FOREIGN KEY (target_item_id) REFERENCES items(id) ON DELETE CASCADE,
  FOREIGN KEY (offered_item_id) REFERENCES items(id) ON DELETE CASCADE,
  FOREIGN KEY (requester_id) REFERENCES users(id),

@@ -9,6 +9,8 @@ import MyListings from './pages/MyListings.jsx';
 import Inbox from './pages/Inbox.jsx';
 import Chat from './pages/Chat.jsx';
 
+import Trades from './pages/Trades.jsx';
+
 function App() {
   return (
     <div className="min-h-screen bg-gray-50">
@@ -20,6 +22,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/post-item" element={<ProtectedRoute><PostItem /></ProtectedRoute>} />
           <Route path="/my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
+          <Route path="/trades" element={<ProtectedRoute><Trades /></ProtectedRoute>} />
           <Route path="/inbox" element={<ProtectedRoute><Inbox /></ProtectedRoute>} />
           <Route path="/chat/:userId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
         </Routes>

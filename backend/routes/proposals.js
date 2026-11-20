@@ -45,6 +45,24 @@ router.get('/', async (req, res) => {
     res.json(rows);
   } catch { res.status(500).json({message:'Could not load proposals'}); }
 });
+router.get('/history', async (req, res) => {
+  try {
+    const [rows] = await db.query(`SELECT r.id, r.kind, r.amount, r.status, r.requester_id,
+      t.title, o.title AS offered_title, owner.name AS owner_name, sender.name AS requester_name
+      FROM barter_requests r JOIN items t ON t.id=r.target_item_id
+      LEFT JOIN items o ON o.id=r.offered_item_id
+      JOIN users owner ON owner.id=t.user_id JOIN users sender ON sender.id=r.requester_id
+      WHERE t.user_id=? OR r.requester_id=? ORDER BY r.id DESC`, [req.user.id, req.user.id]);
+    res.json(rows);
+  } catch { res.status(500).json({message:'Could not load trade history'}); }
+});
+
+router.post('/:id/withdraw', transaction(async (c, req) => {
+  const [result] = await c.query(`UPDATE barter_requests SET status='withdrawn'
+    WHERE id=? AND requester_id=? AND status='pending'`, [req.params.id, req.user.id]);
+  if (!result.affectedRows) fail(409, 'Only your own pending offer can be withdrawn.');
+}));
+
 router.post('/:id/:decision', transaction(async (c, req) => {
   const {id, decision} = req.params;
   if (!['accept','reject'].includes(decision)) fail(400, 'Invalid decision');
