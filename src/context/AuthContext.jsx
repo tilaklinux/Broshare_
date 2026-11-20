@@ -10,7 +10,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const savedUser = localStorage.getItem('hostelbarter_user');
     const savedToken = localStorage.getItem('hostelbarter_token');
-    if (savedUser && savedToken) {
+    if (savedUser && savedToken && !savedToken.startsWith('demo_token_')) {
       setUser(JSON.parse(savedUser));
       setToken(savedToken);
     }

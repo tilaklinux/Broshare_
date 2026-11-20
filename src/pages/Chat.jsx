@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import { getMockMessages, saveMockMessages, getMockUsers, getDemoUser, getMockItems } from '../utils/mockData.js';
 
 function Chat() {
   const { userId } = useParams();
+  const selectedItem = useLocation().state?.item;
+  const [error, setError] = useState('');
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -19,15 +20,8 @@ function Chat() {
   };
 
   useEffect(() => {
-    // Get other user info
-    const users = getMockUsers();
-    const found = users.find(u => u.id === parseInt(userId)) || getDemoUser(parseInt(userId));
-    if (found) {
-      setOtherUser(found);
-    } else {
-      setOtherUser({ id: parseInt(userId), name: 'Student', hostel_name: 'Hostel', room_number: '101' });
-    }
-
+    setOtherUser(null);
+    setRelatedItem(selectedItem || null);
     fetchMessages();
     
     // Poll for new messages every 4 seconds
@@ -44,31 +38,20 @@ function Chat() {
 
   const fetchMessages = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${userId}`, {
+      const res = await fetch(`/api/messages/${userId}`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('hostelbarter_token')}` }
       });
       if (res.ok) {
         const data = await res.json();
         setMessages(data.messages || data);
-        if (data.item) setRelatedItem(data.item);
+        setOtherUser(data.partner);
+        setRelatedItem(selectedItem || data.item);
+        setError('');
       } else {
         throw new Error('API failed');
       }
     } catch {
-      // Demo mode
-      const allMessages = getMockMessages();
-      const chatMessages = allMessages.filter(
-        m => (m.sender_id === user.id && m.receiver_id === parseInt(userId)) ||
-             (m.sender_id === parseInt(userId) && m.receiver_id === user.id)
-      ).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-      setMessages(chatMessages);
-
-      // Find related item
-      if (chatMessages.length > 0 && chatMessages[0].item_id) {
-        const items = getMockItems();
-        const item = items.find(i => i.id === chatMessages[0].item_id);
-        if (item) setRelatedItem(item);
-      }
+      setError('Could not load this conversation. Please check your connection or sign in again.');
     }
     setLoading(false);
   };
@@ -86,7 +69,7 @@ function Chat() {
     };
 
     try {
-      const res = await fetch('http://localhost:5000/api/messages', {
+      const res = await fetch('/api/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,11 +79,8 @@ function Chat() {
       });
       if (!res.ok) throw new Error('Failed');
     } catch {
-      // Demo mode: save locally
-      const allMessages = getMockMessages();
-      msgData.id = Date.now();
-      allMessages.push(msgData);
-      saveMockMessages(allMessages);
+      setError('Message not sent. Please try again.');
+      return;
     }
 
     setMessages(prev => [...prev, { ...msgData, id: msgData.id || Date.now() }]);
@@ -169,6 +149,7 @@ function Chat() {
                       ? 'bg-emerald-600 text-white rounded-br-md'
                       : 'bg-gray-100 text-gray-800 rounded-bl-md'
                   }`}>
+                    <p className="text-xs font-bold">{isMe ? user.name : msg.sender_name || otherUser?.name}</p>
                     <p className="text-sm">{msg.content}</p>
                     <p className={`text-xs mt-1 ${isMe ? 'text-emerald-200' : 'text-gray-400'}`}>
                       {formatTime(msg.created_at)}
@@ -182,7 +163,8 @@ function Chat() {
         )}
       </div>
 
-      {/* Message Input */}
+      {error && <p role="alert">{error}</p>}
+      <p className="text-sm mb-2">Messaging as {user.name}</p>
       <form onSubmit={handleSend} className="flex gap-2">
         <input
           type="text"

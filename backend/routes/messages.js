@@ -86,7 +86,9 @@ router.get('/:userId', authenticateToken, async (req, res) => {
       if (items.length > 0) item = items[0];
     }
 
-    res.json({ messages, item });
+    const [[partner]] = await db.query('SELECT id, name, hostel_name, room_number FROM users WHERE id = ?', [otherUserId]);
+    if (!partner) return res.status(404).json({ message: 'Student not found' });
+    res.json({ messages, item, partner });
   } catch (err) {
     console.error('Get messages error:', err);
     res.status(500).json({ message: 'Server error fetching messages' });

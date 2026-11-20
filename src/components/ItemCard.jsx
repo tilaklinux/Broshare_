@@ -1,3 +1,4 @@
+import { OfferForm } from './Proposals.jsx';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -27,7 +28,7 @@ function ItemCard({ item }) {
       navigate('/login');
       return;
     }
-    navigate(`/chat/${item.user_id}`);
+    navigate(`/chat/${item.user_id}`, { state: { item } });
   };
 
   const timeAgo = (dateStr) => {
@@ -83,8 +84,9 @@ function ItemCard({ item }) {
           <span className="ml-auto text-xs text-gray-400">{timeAgo(item.created_at)}</span>
         </div>
 
+        {user && item.user_id !== user.id && item.status === 'available' && <OfferForm target={item.id} />}
         {/* Action Button */}
-        {item.status === 'available' && (
+        {item.status === 'available' && item.user_id !== user?.id && (
           <button
             onClick={handleMessage}
             className="w-full btn-primary text-sm py-2.5 flex items-center justify-center gap-2"
