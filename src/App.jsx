@@ -1,16 +1,16 @@
-import { Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar.jsx';
-import ProtectedRoute from './components/ProtectedRoute.jsx';
-import Home from './pages/Home.jsx';
-import Login from './pages/Login.jsx';
-import Register from './pages/Register.jsx';
-import PostItem from './pages/PostItem.jsx';
-import MyListings from './pages/MyListings.jsx';
-import Inbox from './pages/Inbox.jsx';
-import Chat from './pages/Chat.jsx';
+import { Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import Home from "./pages/Home.jsx";
+import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
+import PostItem from "./pages/PostItem.jsx";
+import MyListings from "./pages/MyListings.jsx";
+import Inbox from "./pages/Inbox.jsx";
+import Chat from "./pages/Chat.jsx";
 
-import Trades from './pages/Trades.jsx';
-import Admin from './pages/Admin.jsx';
+import Trades from "./pages/Trades.jsx";
+import Admin from "./pages/Admin.jsx";
 
 function App() {
   return (
@@ -21,12 +21,54 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/post-item" element={<ProtectedRoute><PostItem /></ProtectedRoute>} />
-          <Route path="/my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
-          <Route path="/trades" element={<ProtectedRoute><Trades /></ProtectedRoute>} />
-          <Route path="/inbox" element={<ProtectedRoute><Inbox /></ProtectedRoute>} />
-          <Route path="/chat/:userId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
+          <Route
+            path="/post-item"
+            element={
+              <ProtectedRoute>
+                <PostItem />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-listings"
+            element={
+              <ProtectedRoute>
+                <MyListings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/trades"
+            element={
+              <ProtectedRoute>
+                <Trades />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/inbox"
+            element={
+              <ProtectedRoute>
+                <Inbox />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/chat/:userId"
+            element={
+              <ProtectedRoute>
+                <Chat />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute adminOnly>
+                <Admin />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </main>
     </div>
