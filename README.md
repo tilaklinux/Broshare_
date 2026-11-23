@@ -63,3 +63,15 @@ mariadb -u root -p broshare < backend/migrations/004_photo_reupload.sql
 ```
 
 Only the listing owner can upload to their listing, the listing must not be deleted, and the same JPG/PNG/GIF/WebP and 5 MB limits apply. Uploading clears the admin-removal notice.
+
+## Message notifications
+
+The **Inbox** navigation button shows a red badge with the number of students who have unopened messages for you. Inside the Inbox, each conversation shows its own unread count and the total is summarized in the heading. When a new message arrives, a pop-up appears in the corner with the sender's name and a preview — click it to open that chat. Opening a conversation marks its messages as read and clears its counters.
+
+Existing databases need the read-tracking column:
+
+```bash
+mariadb -u root -p broshare < backend/migrations/005_message_notifications.sql
+```
+
+Messages from before the migration are treated as already read, so counters start clean. To test the counters against a disposable database, start the backend and run `node tests/message-notifications.mjs` from `backend/`.

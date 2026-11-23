@@ -45,7 +45,13 @@ function Inbox() {
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-gray-900">Inbox</h1>
         <p className="text-gray-500 mt-1">
-          Your conversations with other students
+          {(() => {
+            const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+            const unreadChats = conversations.filter((c) => c.unread_count > 0).length;
+            return totalUnread > 0
+              ? `${totalUnread} unread message${totalUnread !== 1 ? "s" : ""} from ${unreadChats} student${unreadChats !== 1 ? "s" : ""}`
+              : "Your conversations with other students";
+          })()}
         </p>
       </div>
 
@@ -74,13 +80,20 @@ function Inbox() {
                 {conv.name.charAt(0)}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <h3 className="font-bold text-gray-900">{conv.name}</h3>
-                  <span className="text-xs text-gray-400">
-                    {new Date(conv.created_at).toLocaleDateString()}
+                  <span className="flex items-center gap-2 shrink-0">
+                    {conv.unread_count > 0 && (
+                      <span className="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center">
+                        {conv.unread_count}
+                      </span>
+                    )}
+                    <span className="text-xs text-gray-400">
+                      {new Date(conv.created_at).toLocaleDateString()}
+                    </span>
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 truncate">
+                <p className={`text-sm truncate ${conv.unread_count > 0 ? "text-gray-900 font-semibold" : "text-gray-500"}`}>
                   {conv.last_message}
                 </p>
                 <p className="text-xs text-gray-400 mt-0.5">
