@@ -75,3 +75,7 @@ mariadb -u root -p broshare < backend/migrations/005_message_notifications.sql
 ```
 
 Messages from before the migration are treated as already read, so counters start clean. To test the counters against a disposable database, start the backend and run `node tests/message-notifications.mjs` from `backend/`.
+
+## Managing your listings
+
+In **My Listings** you can **Update photo** on any listing to replace its picture (the old photo file is removed), upload a photo to a listing that has none, and **Delete** a listing you no longer need. Deleting removes the listing from the marketplace and your listings, deletes its photo file, and cancels pending proposals for it; completed-trade history stays readable. Only the owner can do any of this. To verify against a disposable database, run `node tests/listing-management.mjs` from `backend/`.

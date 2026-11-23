@@ -17,6 +17,7 @@ function MyListings() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [uploadingId, setUploadingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchItems = async () => {
@@ -102,20 +103,29 @@ function MyListings() {
     }
   };
 
-  const deleteItem = async (itemId) => {
-    if (!confirm("Are you sure you want to delete this listing?")) return;
+  const deleteItem = async (item) => {
+    if (!confirm(`Delete “${item.title}”? It will be removed from the marketplace, its photo will be deleted, and any pending proposals for it will be cancelled.`)) return;
+    setDeletingId(item.id);
+    setError("");
+    setNotice("");
     try {
-      const res = await fetch(`/api/items/${itemId}`, {
+      const res = await fetch(`/api/items/${item.id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("hostelbarter_token")}`,
         },
       });
-      if (!res.ok) throw new Error();
-    } catch {
-      setError("Listing could not be updated.");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "Listing could not be deleted.");
+      // Remove it from the page immediately, then confirm with the server.
+      setItems((prev) => prev.filter((i) => i.id !== item.id));
+      setNotice(`“${item.title}” was deleted.`);
+      await fetchItems();
+    } catch (err) {
+      setError(err.message || "Listing could not be deleted. Please try again.");
+    } finally {
+      setDeletingId(null);
     }
-    fetchItems();
   };
 
   if (loading) {
@@ -227,11 +237,27 @@ function MyListings() {
                       Mark Available
                     </button>
                   )}
+                  {item.image_url && (
+                    <label className="text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg font-semibold hover:bg-blue-100 transition-colors cursor-pointer">
+                      {uploadingId === item.id ? "Uploading…" : "🖼️ Update photo"}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        className="hidden"
+                        disabled={uploadingId !== null}
+                        onChange={(e) => {
+                          uploadPhoto(item, e.target.files?.[0]);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  )}
                   <button
-                    onClick={() => deleteItem(item.id)}
-                    className="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-semibold hover:bg-red-100 transition-colors"
+                    onClick={() => deleteItem(item)}
+                    disabled={deletingId !== null}
+                    className="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-semibold hover:bg-red-100 transition-colors disabled:opacity-50"
                   >
-                    Delete
+                    {deletingId === item.id ? "Deleting…" : "Delete"}
                   </button>
                 </div>
               </div>
