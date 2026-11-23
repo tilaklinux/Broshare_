@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS messages (
   receiver_id INT NOT NULL,
   item_id INT DEFAULT NULL,
   content TEXT NOT NULL,
+  read_at TIMESTAMP NULL DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -54,6 +55,7 @@ CREATE INDEX idx_items_category ON items(category);
 CREATE INDEX idx_messages_sender ON messages(sender_id);
 CREATE INDEX idx_messages_receiver ON messages(receiver_id);
 CREATE INDEX idx_messages_item ON messages(item_id);
+CREATE INDEX idx_messages_unread ON messages(receiver_id, read_at, sender_id);
 CREATE TABLE IF NOT EXISTS barter_requests (
  id INT AUTO_INCREMENT PRIMARY KEY,
  target_item_id INT NOT NULL,

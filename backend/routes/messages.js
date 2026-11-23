@@ -20,7 +20,9 @@ router.get('/conversations', authenticateToken, async (req, res) => {
         u.hostel_name,
         u.room_number,
         m.content AS last_message,
-        m.created_at
+        m.created_at,
+        m.receiver_id AS message_receiver_id,
+        m.read_at
       FROM messages m
       JOIN users u ON u.id = CASE 
         WHEN m.sender_id = ? THEN m.receiver_id 
@@ -30,7 +32,8 @@ router.get('/conversations', authenticateToken, async (req, res) => {
       ORDER BY m.created_at DESC
     `, [req.user.id, req.user.id, req.user.id, req.user.id]);
 
-    // Group by other_user_id and get latest message per conversation
+    // Group by other_user_id and get latest message per conversation,
+    // counting messages the signed-in user has not opened yet.
     const convMap = {};
     rows.forEach(row => {
       if (!convMap[row.other_user_id]) {
@@ -41,7 +44,11 @@ router.get('/conversations', authenticateToken, async (req, res) => {
           room_number: row.room_number,
           last_message: row.last_message,
           created_at: row.created_at,
+          unread_count: 0,
         };
+      }
+      if (row.message_receiver_id === req.user.id && !row.read_at) {
+        convMap[row.other_user_id].unread_count += 1;
       }
     });
 
@@ -53,12 +60,53 @@ router.get('/conversations', authenticateToken, async (req, res) => {
 });
 
 // ============================================
+// GET /api/messages/unread-summary
+// Badge counters and the newest unread message (for the popup).
+// Defined before /:userId so "unread-summary" is not treated as a user ID.
+// ============================================
+router.get('/unread-summary', authenticateToken, async (req, res) => {
+  try {
+    const [[counts]] = await db.query(`
+      SELECT COUNT(*) AS unread_messages,
+             COUNT(DISTINCT sender_id) AS unread_conversations
+      FROM messages
+      WHERE receiver_id = ? AND read_at IS NULL
+    `, [req.user.id]);
+
+    const [[latest]] = await db.query(`
+      SELECT m.id, m.sender_id, m.content, m.created_at, u.name AS sender_name
+      FROM messages m
+      JOIN users u ON u.id = m.sender_id
+      WHERE m.receiver_id = ? AND m.read_at IS NULL
+      ORDER BY m.id DESC
+      LIMIT 1
+    `, [req.user.id]);
+
+    res.json({
+      unread_messages: Number(counts.unread_messages),
+      unread_conversations: Number(counts.unread_conversations),
+      latest: latest || null,
+    });
+  } catch (err) {
+    console.error('Get unread summary error:', err);
+    res.status(500).json({ message: 'Server error fetching unread messages' });
+  }
+});
+
+// ============================================
 // GET /api/messages/:userId
 // Get message history with a specific user
 // ============================================
 router.get('/:userId', authenticateToken, async (req, res) => {
   try {
     const otherUserId = parseInt(req.params.userId);
+
+    // Opening a conversation marks everything they sent you as read.
+    await db.query(
+      `UPDATE messages SET read_at = CURRENT_TIMESTAMP
+       WHERE sender_id = ? AND receiver_id = ? AND read_at IS NULL`,
+      [otherUserId, req.user.id],
+    );
 
     // Get messages between the two users
     const [messages] = await db.query(`

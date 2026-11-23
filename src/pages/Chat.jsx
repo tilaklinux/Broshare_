@@ -49,6 +49,9 @@ function Chat() {
         setOtherUser(data.partner);
         setRelatedItem(selectedItem || data.item);
         setError("");
+        // Opening this chat marked their messages as read; refresh the
+        // navbar badge straight away instead of waiting for its next poll.
+        window.dispatchEvent(new Event("broshare:messages-changed"));
       } else {
         throw new Error("API failed");
       }
