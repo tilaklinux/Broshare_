@@ -56,7 +56,7 @@ function Register() {
             <span className="text-3xl">🎓</span>
           </div>
           <h2 className="text-3xl font-extrabold text-gray-900">
-            Join HostelBarter
+            Join Broshare
           </h2>
           <p className="text-gray-500 mt-2">
             Create your account to start bartering
