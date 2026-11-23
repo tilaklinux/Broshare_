@@ -26,6 +26,7 @@ function App() {
           <Route path="/trades" element={<ProtectedRoute><Trades /></ProtectedRoute>} />
           <Route path="/inbox" element={<ProtectedRoute><Inbox /></ProtectedRoute>} />
           <Route path="/chat/:userId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
         </Routes>
       </main>
     </div>
