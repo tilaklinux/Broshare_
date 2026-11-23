@@ -95,7 +95,7 @@ function ItemCard({ item }) {
               {item.user_name || "Student"}
             </p>
             <p className="text-xs text-gray-400">
-              {item.hostel_name} · Room {item.room_number}
+              {item.hostel_name || "Hostel"}
             </p>
           </div>
           <span className="ml-auto text-xs text-gray-400">
