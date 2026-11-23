@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS items (
   category ENUM('Books', 'Electronics', 'Accessories', 'Essentials', 'Other') NOT NULL,
   looking_for VARCHAR(255) NOT NULL,
   image_url VARCHAR(500) DEFAULT NULL,
+  photo_removed_by_admin TINYINT(1) NOT NULL DEFAULT 0,
   status ENUM('available', 'bartered', 'deleted') DEFAULT 'available',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

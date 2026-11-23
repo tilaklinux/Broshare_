@@ -53,3 +53,13 @@ node tests/admin-panel.mjs
 ```
 
 It creates test accounts, promotes one directly in the test database, and checks admin/non-admin access, photo and listing deletion, proposal cancellation, suspension/reactivation, role changes, protected self-actions, permanent user deletion, and the audit log. Test accounts and listings are left in the disposable database.
+
+## Re-uploading a listing photo
+
+If an admin removes a listing photo, the owner will see a notice in **My Listings** — “An admin removed this listing's photo” — with an **Upload photo** button to add an appropriate replacement. Listings that simply never had a photo get the same upload option. Existing databases need the flag that records an admin removal:
+
+```bash
+mariadb -u root -p broshare < backend/migrations/004_photo_reupload.sql
+```
+
+Only the listing owner can upload to their listing, the listing must not be deleted, and the same JPG/PNG/GIF/WebP and 5 MB limits apply. Uploading clears the admin-removal notice.

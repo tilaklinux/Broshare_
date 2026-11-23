@@ -113,9 +113,21 @@ try {
   await propose({ target_item_id: lampListing.id, kind: 'cash', amount: 250 });
 
   await request(`admin/listings/${photoListing.id}/remove-photo`, admin, { method: 'POST', body: {} });
-  const [[photoRow]] = await db.query('SELECT image_url FROM items WHERE id = ?', [photoListing.id]);
+  let [[photoRow]] = await db.query('SELECT image_url, photo_removed_by_admin FROM items WHERE id = ?', [photoListing.id]);
   assert.equal(photoRow.image_url, null);
+  assert.equal(Number(photoRow.photo_removed_by_admin), 1);
   await assertPhotoStatus(photoListing.imageUrl, 404);
+
+  // Another student cannot replace the photo; the owner can, which clears
+  // the "removed by admin" prompt.
+  await uploadReplacementPhoto(buyer, photoListing.id, 404);
+  const replacement = await uploadReplacementPhoto(seller, photoListing.id);
+  [[photoRow]] = await db.query('SELECT image_url, photo_removed_by_admin FROM items WHERE id = ?', [photoListing.id]);
+  assert.equal(photoRow.image_url, replacement.image_url);
+  assert.equal(Number(photoRow.photo_removed_by_admin), 0);
+  await assertPhotoStatus(replacement.image_url, 200);
+  const [mine] = [await request('items/my-items', seller)];
+  assert.equal(mine.find((item) => item.id === photoListing.id)?.image_url, replacement.image_url);
 
   await request(`admin/listings/${lampListing.id}/delete`, admin, { method: 'POST', body: {} });
   const [[lampRow]] = await db.query('SELECT status, image_url FROM items WHERE id = ?', [lampListing.id]);
