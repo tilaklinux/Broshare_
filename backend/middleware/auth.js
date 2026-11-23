@@ -1,7 +1,13 @@
 import jwt from 'jsonwebtoken';
+import db from '../db.js';
 
-// Middleware to verify JWT token
-export function authenticateToken(req, res, next) {
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key';
+
+// Verify the token AND load the current account from MariaDB. Loading the
+// account on each authenticated request means an admin promotion, demotion,
+// suspension, or account deletion takes effect immediately instead of when
+// the seven-day token happens to expire.
+export async function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -9,11 +15,40 @@ export function authenticateToken(req, res, next) {
     return res.status(401).json({ message: 'Access denied. No token provided.' });
   }
 
+  let decoded;
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
-    req.user = decoded; // { id, email, name }
-    next();
-  } catch (err) {
+    decoded = jwt.verify(token, JWT_SECRET);
+  } catch {
     return res.status(403).json({ message: 'Invalid or expired token.' });
   }
+
+  try {
+    const [[user]] = await db.query(
+      `SELECT id, name, email, hostel_name, room_number, role, status
+       FROM users WHERE id = ?`,
+      [decoded.id],
+    );
+
+    if (!user) {
+      return res.status(401).json({ message: 'This account no longer exists. Please log in again.' });
+    }
+    if (user.status !== 'active') {
+      return res.status(403).json({ message: 'This account has been suspended. Please contact an administrator.' });
+    }
+
+    req.user = user;
+    return next();
+  } catch (err) {
+    console.error('Authentication check failed:', err);
+    return res.status(500).json({ message: 'Could not verify this session. Please retry.' });
+  }
+}
+
+// Admin authority comes from the fresh database record attached by
+// authenticateToken, never from a role claim supplied by the browser.
+export function requireAdmin(req, res, next) {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ message: 'Administrator access is required.' });
+  }
+  return next();
 }

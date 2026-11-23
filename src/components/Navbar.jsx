@@ -49,6 +49,11 @@ function Navbar() {
                   My Listings
                 </Link>
                 <Link to="/trades" className="btn-secondary text-sm">Trades</Link>
+                {user.role === 'admin' && (
+                  <Link to="/admin" className="btn-secondary text-sm hidden sm:inline-flex">
+                    🛡️ Admin
+                  </Link>
+                )}
                 <Link
                   to="/inbox"
                   className="btn-secondary text-sm hidden sm:inline-flex items-center gap-1.5"
@@ -96,6 +101,11 @@ function Navbar() {
                   <Link to="/inbox" className="p-2 text-gray-600 text-lg">
                     💬
                   </Link>
+                  {user.role === 'admin' && (
+                    <Link to="/admin" className="p-2 text-gray-600 text-lg" title="Admin panel">
+                      🛡️
+                    </Link>
+                  )}
                   <button onClick={handleLogout} className="p-2 text-gray-400">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"

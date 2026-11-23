@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.js';
 import itemRoutes from './routes/items.js';
 import messageRoutes from './routes/messages.js';
 import proposals from "./routes/proposals.js";
+import adminRoutes from './routes/admin.js';
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/proposals", proposals);
 app.use("/api/items", itemRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

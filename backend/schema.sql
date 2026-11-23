@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS users (
   password VARCHAR(255) NOT NULL,
   hostel_name VARCHAR(100) NOT NULL,
   room_number VARCHAR(20) NOT NULL,
+  role ENUM('student', 'admin') NOT NULL DEFAULT 'student',
+  status ENUM('active', 'suspended') NOT NULL DEFAULT 'active',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -58,7 +60,7 @@ CREATE TABLE IF NOT EXISTS barter_requests (
  requester_id INT NOT NULL,
  kind ENUM('item','cash','free') NOT NULL,
  amount DECIMAL(10,2),
- status ENUM('pending','accepted','rejected','withdrawn') NOT NULL DEFAULT 'pending',
+ status ENUM('pending','accepted','rejected','withdrawn','cancelled') NOT NULL DEFAULT 'pending',
  FOREIGN KEY (target_item_id) REFERENCES items(id) ON DELETE CASCADE,
  FOREIGN KEY (offered_item_id) REFERENCES items(id) ON DELETE CASCADE,
  FOREIGN KEY (requester_id) REFERENCES users(id),
@@ -72,3 +74,18 @@ CREATE TABLE IF NOT EXISTS completed_trades (
  requester_id INT NOT NULL, owner_id INT NOT NULL, kind ENUM('item','cash','free') NOT NULL,
  amount DECIMAL(10,2), completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Moderation audit log
+CREATE TABLE IF NOT EXISTS admin_actions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  admin_id INT NULL,
+  action VARCHAR(80) NOT NULL,
+  target_type ENUM('listing', 'photo', 'user', 'proposal') NOT NULL,
+  target_id INT NULL,
+  target_label VARCHAR(255) NULL,
+  details VARCHAR(500) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE SET NULL
+);
+CREATE INDEX idx_users_role_status ON users(role, status);
+CREATE INDEX idx_admin_actions_created ON admin_actions(created_at);

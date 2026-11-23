@@ -23,8 +23,9 @@ function transaction(action) {
 }
 async function lockItems(c, target, offered) {
   const ids = offered ? [target, offered] : [target];
-  const [rows] = await c.query('SELECT * FROM items WHERE id IN (?) ORDER BY id FOR UPDATE', [ids]);
-  if (rows.length !== ids.length || rows.some(i => i.status !== 'available')) fail(409, 'Listing no longer available');
+  const [rows] = await c.query(`SELECT i.*, u.status AS owner_status FROM items i
+    JOIN users u ON u.id = i.user_id WHERE i.id IN (?) ORDER BY i.id FOR UPDATE`, [ids]);
+  if (rows.length !== ids.length || rows.some(i => i.status !== 'available' || i.owner_status !== 'active')) fail(409, 'Listing no longer available');
   return rows;
 }
 router.post('/', transaction(async (c, req) => {

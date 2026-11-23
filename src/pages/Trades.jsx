@@ -4,7 +4,7 @@ import api from '../utils/proposalApi.js';
 
 const badges = {
   pending: 'bg-amber-100 text-amber-800', accepted: 'bg-emerald-100 text-emerald-800',
-  rejected: 'bg-red-100 text-red-800', withdrawn: 'bg-gray-100 text-gray-700',
+  rejected: 'bg-red-100 text-red-800', withdrawn: 'bg-gray-100 text-gray-700', cancelled: 'bg-purple-100 text-purple-800',
 };
 
 export default function Trades() {

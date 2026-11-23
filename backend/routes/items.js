@@ -48,7 +48,7 @@ router.get('/', async (req, res) => {
       SELECT items.*, users.name AS user_name, users.hostel_name, users.room_number
       FROM items
       JOIN users ON items.user_id = users.id
-      WHERE items.status = 'available'
+      WHERE items.status = 'available' AND users.status = 'active'
       ORDER BY items.created_at DESC
     `);
     res.json(rows);
