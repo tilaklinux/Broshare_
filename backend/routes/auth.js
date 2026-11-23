@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from '../db.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key';
@@ -34,15 +35,16 @@ router.post('/register', async (req, res) => {
       [name, email, hashedPassword, hostel_name, room_number]
     );
 
-    // Generate JWT token
+    // New public accounts are always students. Admins are promoted only by
+    // an existing admin or by a deliberate database update.
     const token = jwt.sign(
-      { id: result.insertId, name, email, hostel_name, room_number },
+      { id: result.insertId, name, email, hostel_name, room_number, role: 'student', status: 'active' },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
 
     // Return user data (without password)
-    const user = { id: result.insertId, name, email, hostel_name, room_number };
+    const user = { id: result.insertId, name, email, hostel_name, room_number, role: 'student', status: 'active' };
     res.status(201).json({ user, token });
   } catch (err) {
     console.error('Register error:', err);
@@ -75,10 +77,13 @@ router.post('/login', async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
+    if (user.status !== 'active') {
+      return res.status(403).json({ message: 'This account has been suspended. Please contact an administrator.' });
+    }
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user.id, name: user.name, email: user.email, hostel_name: user.hostel_name, room_number: user.room_number },
+      { id: user.id, name: user.name, email: user.email, hostel_name: user.hostel_name, room_number: user.room_number, role: user.role, status: user.status },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -90,6 +95,8 @@ router.post('/login', async (req, res) => {
       email: user.email,
       hostel_name: user.hostel_name,
       room_number: user.room_number,
+      role: user.role,
+      status: user.status,
     };
 
     res.json({ user: userData, token });
@@ -97,6 +104,12 @@ router.post('/login', async (req, res) => {
     console.error('Login error:', err);
     res.status(500).json({ message: 'Server error during login' });
   }
+});
+
+// Current database-backed profile. The client uses this on refresh so role
+// and suspension changes are reflected without waiting for a new login.
+router.get('/me', authenticateToken, (req, res) => {
+  res.json({ user: req.user });
 });
 
 export default router;

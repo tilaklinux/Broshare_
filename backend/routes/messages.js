@@ -107,6 +107,13 @@ router.post('/', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'Receiver and content are required' });
     }
 
+    if (Number(receiver_id) === req.user.id) {
+      return res.status(400).json({ message: 'You cannot message yourself.' });
+    }
+    const [[receiver]] = await db.query('SELECT status FROM users WHERE id = ?', [receiver_id]);
+    if (!receiver) return res.status(404).json({ message: 'Student not found' });
+    if (receiver.status !== 'active') return res.status(403).json({ message: 'This student is not available for messages.' });
+
     const [result] = await db.query(
       'INSERT INTO messages (sender_id, receiver_id, item_id, content) VALUES (?, ?, ?, ?)',
       [req.user.id, receiver_id, item_id || null, content]

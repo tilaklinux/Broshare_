@@ -10,6 +10,7 @@ import Inbox from './pages/Inbox.jsx';
 import Chat from './pages/Chat.jsx';
 
 import Trades from './pages/Trades.jsx';
+import Admin from './pages/Admin.jsx';
 
 function App() {
   return (

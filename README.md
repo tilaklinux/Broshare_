@@ -17,3 +17,39 @@ Use separate browser profiles. Have A post a textbook with a photo and B post a 
 Open **Trades** to switch between Received and Sent offers. Refresh to see the latest decisions. Only the sender can withdraw a pending offer. Removing a listing hides it from the feed and My Listings, rejects pending offers involving it, and preserves the listing title in trade history. Previously hard-deleted requests cannot be recovered by the migration.
 
 For the three-student integration test, start the backend against a **disposable database** initialized with the current schema. From `backend/`, with the same `.env` as the running server, run `node tests/trade-history.mjs`. This creates test accounts and listings, checks withdrawal permissions, competing offers, both students’ histories, a single completed-trade record, and history after listing removal. Test data is left in the disposable database.
+
+## Admin panel
+
+Apply the admin migration to an existing database:
+
+```bash
+mariadb -u root -p broshare < backend/migrations/003_admin_panel.sql
+```
+
+There is deliberately no “register as admin” option. Register a normal account first, then promote that one account directly in MariaDB:
+
+```bash
+mariadb -u root -p broshare -e "UPDATE users SET role='admin', status='active' WHERE email='your-email@example.com';"
+```
+
+Restart Express, refresh the site (or sign out and back in), and open **Admin** in the navigation bar. Instead of the SQL update, you can run `npm run make-admin -- your-email@example.com` from `backend/` after registering. Admin authority is checked from MariaDB by Express on every admin request, so changing a role or suspending an account takes effect immediately.
+
+Admins can:
+
+- see user, listing, photo, proposal, completed-trade, and message totals;
+- search and filter every listing status, including removed listings;
+- enlarge a listing photo, remove only its photo, delete the whole listing, or restore a removed listing;
+- search users, suspend/reactivate accounts, promote/demote admins, and permanently delete user accounts;
+- cancel a pending proposal and review an audit log of moderation actions.
+
+Removing a photo deletes its file from `backend/uploads`. Deleting a listing hides it from the marketplace, rejects pending proposals involving it, deletes its photo file, and preserves resolved trade titles. Suspending a student signs out their existing sessions, hides their listings, prevents new sign-ins, and rejects their pending proposals. Deleting a user is permanent: it removes their account, listings, messages, proposals, and uploaded photo files.
+
+### Admin integration test
+
+Start the backend against a **disposable database** initialized with the current schema. From `backend/`, with the same `.env` used by the running server, run:
+
+```bash
+node tests/admin-panel.mjs
+```
+
+It creates test accounts, promotes one directly in the test database, and checks admin/non-admin access, photo and listing deletion, proposal cancellation, suspension/reactivation, role changes, protected self-actions, permanent user deletion, and the audit log. Test accounts and listings are left in the disposable database.
