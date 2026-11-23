@@ -109,7 +109,8 @@ function MyListings() {
         </div>
       </div>
 
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert" className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-red-700">{error}</p>}
+      {notice && <p role="status" className="mb-4 rounded-xl bg-emerald-50 px-4 py-3 text-emerald-800">{notice}</p>}
       <IncomingOffers onChange={fetchItems} />
       {items.length === 0 ? (
         <div className="card p-12 text-center">
@@ -160,6 +161,28 @@ function MyListings() {
                       : "🔄 Bartered"}
                   </span>
                 </div>
+                {!item.image_url && (
+                  <div className={`mt-3 rounded-xl px-3 py-2.5 ${item.photo_removed_by_admin ? "bg-amber-50 border border-amber-200" : "bg-gray-50 border border-gray-200"}`}>
+                    <p className={`text-xs ${item.photo_removed_by_admin ? "text-amber-800" : "text-gray-600"}`}>
+                      {item.photo_removed_by_admin
+                        ? "An admin removed this listing's photo. Please upload an appropriate photo again."
+                        : "This listing has no photo yet."}
+                    </p>
+                    <label className="btn-secondary mt-2 inline-flex cursor-pointer text-xs px-3 py-1.5">
+                      {uploadingId === item.id ? "Uploading…" : "📷 Upload photo"}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        className="hidden"
+                        disabled={uploadingId !== null}
+                        onChange={(e) => {
+                          uploadPhoto(item, e.target.files?.[0]);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  </div>
+                )}
                 <div className="flex gap-2 mt-3">
                   {item.status === "available" ? (
                     <button

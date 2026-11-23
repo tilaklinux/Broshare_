@@ -162,7 +162,7 @@ router.post('/listings/:id/remove-photo', transaction(async (connection, req) =>
   const id = positiveId(req.params.id);
   const item = await findListingForUpdate(connection, id);
   if (!item.image_url) fail(409, 'This listing does not have a photo.');
-  await connection.query('UPDATE items SET image_url = NULL WHERE id = ?', [id]);
+  await connection.query('UPDATE items SET image_url = NULL, photo_removed_by_admin = 1 WHERE id = ?', [id]);
   await audit(connection, req, 'photo_removed', 'photo', id, item.title, `Photo removed from listing owned by ${item.owner_name}.`);
   return { files: [item.image_url], body: { message: 'Photo removed and its uploaded file deleted.' } };
 }));
@@ -171,7 +171,7 @@ router.post('/listings/:id/delete', transaction(async (connection, req) => {
   const id = positiveId(req.params.id);
   const item = await findListingForUpdate(connection, id);
   if (item.status === 'deleted') fail(409, 'This listing has already been removed.');
-  await connection.query("UPDATE items SET status = 'deleted', image_url = NULL WHERE id = ?", [id]);
+  await connection.query("UPDATE items SET status = 'deleted', image_url = NULL, photo_removed_by_admin = 0 WHERE id = ?", [id]);
   await connection.query(
     `UPDATE barter_requests SET status = 'rejected' WHERE status = 'pending'
      AND (target_item_id = ? OR offered_item_id = ?)`,

@@ -105,6 +105,74 @@ router.post('/', authenticateToken, upload.single('image'), async (req, res) => 
   }
 });
 
+// Only delete files created by this upload route, never an arbitrary path.
+async function removeUpload(imageUrl) {
+  if (typeof imageUrl !== 'string' || !imageUrl.startsWith('/uploads/')) return;
+  const filename = basename(imageUrl.slice('/uploads/'.length));
+  if (!filename || filename !== imageUrl.slice('/uploads/'.length)) return;
+  try {
+    await unlink(join(__dirname, '..', 'uploads', filename));
+  } catch (err) {
+    if (err.code !== 'ENOENT') console.error('Could not remove uploaded file:', err.message);
+  }
+}
+
+// Return JSON instead of Express's default HTML page for bad/oversized files.
+function uploadPhoto(req, res, next) {
+  upload.single('image')(req, res, (err) => {
+    if (!err) return next();
+    const message = err.code === 'LIMIT_FILE_SIZE'
+      ? 'Image must be 5 MB or smaller.'
+      : 'Only JPG, PNG, GIF, or WebP images are allowed.';
+    return res.status(400).json({ message });
+  });
+}
+
+// ============================================
+// POST /api/items/:id/photo
+// Add or replace the photo on your own listing. Used when a listing has no
+// photo, including after an admin removed the previous one.
+// ============================================
+router.post('/:id/photo', authenticateToken, uploadPhoto, async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'Choose an image to upload.' });
+  }
+
+  const imageUrl = `/uploads/${req.file.filename}`;
+  let connection;
+  let oldImageUrl = null;
+  try {
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    const [[item]] = await connection.query(
+      'SELECT user_id, status, image_url FROM items WHERE id = ? FOR UPDATE',
+      [req.params.id],
+    );
+    if (!item || item.user_id !== req.user.id || item.status === 'deleted') {
+      await connection.rollback();
+      await unlink(req.file.path).catch(() => {});
+      return res.status(404).json({ message: 'Listing not found for this account' });
+    }
+
+    oldImageUrl = item.image_url;
+    await connection.query(
+      'UPDATE items SET image_url = ?, photo_removed_by_admin = 0 WHERE id = ?',
+      [imageUrl, req.params.id],
+    );
+    await connection.commit();
+  } catch (err) {
+    if (connection) await connection.rollback().catch(() => {});
+    await unlink(req.file.path).catch(() => {});
+    console.error('Photo upload failed:', err);
+    return res.status(500).json({ message: 'Could not upload the photo. Please retry.' });
+  } finally {
+    connection?.release();
+  }
+
+  if (oldImageUrl && oldImageUrl !== imageUrl) await removeUpload(oldImageUrl);
+  return res.json({ message: 'Photo uploaded.', image_url: imageUrl });
+});
+
 // ============================================
 // PUT /api/items/:id/status
 // Update item status (available/bartered)
