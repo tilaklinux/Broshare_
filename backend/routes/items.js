@@ -45,7 +45,7 @@ const upload = multer({
 router.get('/', async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT items.*, users.name AS user_name, users.hostel_name, users.room_number
+      SELECT items.*, users.name AS user_name, users.hostel_name
       FROM items
       JOIN users ON items.user_id = users.id
       WHERE items.status = 'available' AND users.status = 'active'
@@ -65,7 +65,7 @@ router.get('/', async (req, res) => {
 router.get('/my-items', authenticateToken, async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT items.*, users.name AS user_name, users.hostel_name, users.room_number
+      SELECT items.*, users.name AS user_name, users.hostel_name
       FROM items
       JOIN users ON items.user_id = users.id
       WHERE items.user_id = ? AND items.status <> 'deleted'
