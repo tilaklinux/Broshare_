@@ -15,6 +15,8 @@ function MyListings() {
   const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [uploadingId, setUploadingId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchItems = async () => {
@@ -72,6 +74,32 @@ function MyListings() {
       setError("Listing could not be updated.");
     }
     fetchItems();
+  };
+
+  const uploadPhoto = async (item, file) => {
+    if (!file) return;
+    setUploadingId(item.id);
+    setError("");
+    setNotice("");
+    try {
+      const form = new FormData();
+      form.append("image", file);
+      const res = await fetch(`/api/items/${item.id}/photo`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("hostelbarter_token")}`,
+        },
+        body: form,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "Photo upload failed.");
+      setNotice(`Photo uploaded for “${item.title}”.`);
+      await fetchItems();
+    } catch (err) {
+      setError(err.message || "Photo could not be uploaded.");
+    } finally {
+      setUploadingId(null);
+    }
   };
 
   const deleteItem = async (itemId) => {
