@@ -4,6 +4,7 @@ import { dirname, join, extname } from 'path';
 import { fileURLToPath } from 'url';
 import db from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { describeDbError } from '../utils/dbErrors.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -164,7 +165,7 @@ router.post('/:id/photo', authenticateToken, uploadPhoto, async (req, res) => {
     if (connection) await connection.rollback().catch(() => {});
     await unlink(req.file.path).catch(() => {});
     console.error('Photo upload failed:', err);
-    return res.status(500).json({ message: 'Could not upload the photo. Please retry.' });
+    return res.status(500).json({ message: describeDbError(err, 'Could not upload the photo. Please retry.') });
   } finally {
     connection?.release();
   }
@@ -208,7 +209,7 @@ async function changeStatus(req, res, status) {
   } catch (err) {
     if (connection) await connection.rollback();
     console.error('Listing update failed:', err);
-    res.status(500).json({ message: 'Could not update listing. Please retry.' });
+    res.status(500).json({ message: describeDbError(err, 'Could not update listing. Please retry.') });
   } finally { connection?.release(); }
 }
 

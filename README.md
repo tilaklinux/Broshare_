@@ -79,3 +79,13 @@ Messages from before the migration are treated as already read, so counters star
 ## Managing your listings
 
 In **My Listings** you can **Update photo** on any listing to replace its picture (the old photo file is removed), upload a photo to a listing that has none, and **Delete** a listing you no longer need. Deleting removes the listing from the marketplace and your listings, deletes its photo file, and cancels pending proposals for it; completed-trade history stays readable. Only the owner can do any of this. To verify against a disposable database, run `node tests/listing-management.mjs` from `backend/`.
+
+## Troubleshooting: listing deletion fails but photo deletion works
+
+Deleting a listing additionally needs `items.status` to accept `'deleted'`, the `photo_removed_by_admin` column, and the `barter_requests` table. If an older database skipped a migration, photo removal still works while owner and admin listing deletion fail. Run the repair script (safe to run more than once), then restart Express:
+
+```bash
+mariadb -u root -p broshare < backend/migrations/006_repair_listing_deletion.sql
+```
+
+The API now reports the specific database problem in the error message instead of only “please retry”, and the same detail is printed in the Express terminal. Note that a deleted listing intentionally remains visible to admins under the **Deleted** status (with a Restore option); it disappears from the marketplace and from the owner's My Listings immediately.

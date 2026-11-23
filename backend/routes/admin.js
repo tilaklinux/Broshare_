@@ -4,6 +4,7 @@ import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import db from '../db.js';
 import { authenticateToken, requireAdmin } from '../middleware/auth.js';
+import { describeDbError } from '../utils/dbErrors.js';
 
 const router = express.Router();
 router.use(authenticateToken, requireAdmin);
@@ -65,7 +66,7 @@ function transaction(work) {
       if (connection) await connection.rollback().catch(() => {});
       const status = err.status || 500;
       if (status >= 500) console.error('Admin action failed:', err);
-      res.status(status).json({ message: err.status ? err.message : 'Admin action failed. Please retry.' });
+      res.status(status).json({ message: err.status ? err.message : describeDbError(err, 'Admin action failed. Please retry.') });
     } finally {
       connection?.release();
     }
