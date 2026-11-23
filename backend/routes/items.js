@@ -185,18 +185,26 @@ async function changeStatus(req, res, status) {
     connection = await db.getConnection();
     await connection.beginTransaction();
     const id = req.params.id;
-    const [[item]] = await connection.query('SELECT user_id,status FROM items WHERE id=? FOR UPDATE', [id]);
+    const [[item]] = await connection.query('SELECT user_id,status,image_url FROM items WHERE id=? FOR UPDATE', [id]);
     if (!item || item.status === 'deleted' || item.user_id !== req.user.id) {
       await connection.rollback();
       return res.status(404).json({ message: 'Listing not found for this account' });
     }
-    await connection.query('UPDATE items SET status=? WHERE id=?', [status,id]);
+    if (status === 'deleted') {
+      // Deleting a listing also removes its photo so the image does not stay
+      // publicly reachable after the owner has taken the listing down.
+      await connection.query(
+        'UPDATE items SET status=?, image_url=NULL, photo_removed_by_admin=0 WHERE id=?', [status, id]);
+    } else {
+      await connection.query('UPDATE items SET status=? WHERE id=?', [status,id]);
+    }
     if (status !== 'available') {
       await connection.query(`UPDATE barter_requests SET status='rejected' WHERE status='pending'
         AND (target_item_id=? OR offered_item_id=?)`, [id,id]);
     }
     await connection.commit();
-    res.json({ message: `Listing marked as ${status}` });
+    if (status === 'deleted' && item.image_url) await removeUpload(item.image_url);
+    res.json({ message: status === 'deleted' ? 'Listing deleted' : `Listing marked as ${status}` });
   } catch (err) {
     if (connection) await connection.rollback();
     console.error('Listing update failed:', err);
