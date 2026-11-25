@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { dirname, join, extname } from 'path';
+import { basename, dirname, join, extname } from 'path';
 import { fileURLToPath } from 'url';
 import db from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
@@ -170,7 +170,9 @@ router.post('/:id/photo', authenticateToken, uploadPhoto, async (req, res) => {
     connection?.release();
   }
 
-  if (oldImageUrl && oldImageUrl !== imageUrl) await removeUpload(oldImageUrl);
+  if (oldImageUrl && oldImageUrl !== imageUrl) {
+    await removeUpload(oldImageUrl).catch((err) => console.error('Old photo cleanup failed:', err.message));
+  }
   return res.json({ message: 'Photo uploaded.', image_url: imageUrl });
 });
 
@@ -204,7 +206,11 @@ async function changeStatus(req, res, status) {
         AND (target_item_id=? OR offered_item_id=?)`, [id,id]);
     }
     await connection.commit();
-    if (status === 'deleted' && item.image_url) await removeUpload(item.image_url);
+    // The listing is already deleted at this point. Photo cleanup must never
+    // turn a successful delete into an error response.
+    if (status === 'deleted' && item.image_url) {
+      await removeUpload(item.image_url).catch((err) => console.error('Photo cleanup failed:', err.message));
+    }
     res.json({ message: status === 'deleted' ? 'Listing deleted' : `Listing marked as ${status}` });
   } catch (err) {
     if (connection) await connection.rollback();
