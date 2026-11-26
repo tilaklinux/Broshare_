@@ -1,4 +1,11 @@
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Load backend/.env explicitly so SMTP settings are found no matter which
+// folder the server was started from.
+dotenv.config({ path: join(dirname(fileURLToPath(import.meta.url)), '..', '.env') });
 
 // Free email sending: configure any SMTP account in backend/.env, for
 // example a Gmail account with an App Password
@@ -15,6 +22,24 @@ if (process.env.SMTP_HOST) {
       ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
       : undefined,
   });
+}
+
+export function isMailConfigured() {
+  return Boolean(transporter);
+}
+
+// Sends a simple test email so you can verify your SMTP settings with
+// `npm run test-email -- you@example.com` in backend/.
+export async function sendTestEmail(to) {
+  if (!transporter) return { delivered: false };
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM || process.env.SMTP_USER,
+    to,
+    subject: 'Broshare email test',
+    text: 'Your Broshare SMTP settings are working. Password reset emails will be sent from this address.',
+    html: '<div style="font-family: Arial, sans-serif;"><h2 style="color:#059669;">Broshare email test</h2><p>Your SMTP settings are working. Password reset emails will be sent from this address.</p></div>',
+  });
+  return { delivered: true };
 }
 
 export async function sendPasswordResetEmail(to, resetLink) {

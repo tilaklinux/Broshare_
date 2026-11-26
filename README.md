@@ -103,7 +103,12 @@ mariadb -u root -p broshare < backend/migrations/007_password_reset.sql
 You do **not** need a paid email service. Two free options:
 
 1. **No email setup (local demo):** set `ALLOW_DEV_RESET_LINK=true` in `backend/.env` and leave the `SMTP_*` values unset. The reset link is printed in the backend terminal and shown on the forgot-password page. Never enable this on a public server — anyone could reset any account with it.
-2. **Real emails for free:** use any free SMTP account, e.g. a Gmail account: turn on 2-Step Verification, create an **App Password**, and set `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, `SMTP_USER`, `SMTP_PASS` (the app password), and `FRONTEND_URL` in `backend/.env`, then restart Express. Free tiers from providers such as Brevo or Resend work the same way with their SMTP details.
+2. **Real emails for free (Gmail):**
+   1. Turn on 2-Step Verification for the Google account, then create an **App Password** (Google Account → Security → App passwords).
+   2. In `backend/.env` set `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, `SMTP_USER=youraddress@gmail.com`, `SMTP_PASS=` the 16-character app password (**without spaces**), `MAIL_FROM=Broshare <youraddress@gmail.com>`, `FRONTEND_URL=http://localhost:3000`, and `ALLOW_DEV_RESET_LINK=false`. Never commit `.env` or share the app password.
+   3. Restart Express, then from `backend/` run `npm run test-email -- youraddress@gmail.com` and check the inbox/spam folder.
+   4. Open the site, log out, and use **Forgot password?** with a registered email to receive a real reset email.
+   Free tiers from providers such as Brevo or Resend work the same way with their SMTP details.
 
 If a student forgets **which email** they registered with, a reset link cannot be sent — ask an admin to find the account by name in the Admin Panel's Users tab and tell them the email.
 
