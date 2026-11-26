@@ -24,7 +24,7 @@ export async function authenticateToken(req, res, next) {
 
   try {
     const [[user]] = await db.query(
-      `SELECT id, name, email, hostel_name, room_number, role, status
+      `SELECT id, name, email, hostel_name, room_number, role, status, password_changed_at
        FROM users WHERE id = ?`,
       [decoded.id],
     );
@@ -35,7 +35,13 @@ export async function authenticateToken(req, res, next) {
     if (user.status !== 'active') {
       return res.status(403).json({ message: 'This account has been suspended. Please contact an administrator.' });
     }
+    // Tokens issued before the last password reset/change no longer work.
+    if (user.password_changed_at && decoded.iat
+        && decoded.iat * 1000 < new Date(user.password_changed_at).getTime()) {
+      return res.status(401).json({ message: 'Your password has changed. Please log in again.' });
+    }
 
+    delete user.password_changed_at;
     req.user = user;
     return next();
   } catch (err) {

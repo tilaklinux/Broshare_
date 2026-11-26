@@ -16,6 +16,9 @@ CREATE TABLE IF NOT EXISTS users (
   room_number VARCHAR(20) NOT NULL,
   role ENUM('student', 'admin') NOT NULL DEFAULT 'student',
   status ENUM('active', 'suspended') NOT NULL DEFAULT 'active',
+  reset_token_hash CHAR(64) NULL,
+  reset_token_expires TIMESTAMP NULL,
+  password_changed_at TIMESTAMP NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
