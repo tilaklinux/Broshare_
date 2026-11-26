@@ -89,3 +89,22 @@ mariadb -u root -p broshare < backend/migrations/006_repair_listing_deletion.sql
 ```
 
 The API now reports the specific database problem in the error message instead of only “please retry”, and the same detail is printed in the Express terminal. Note that a deleted listing intentionally remains visible to admins under the **Deleted** status (with a Restore option); it disappears from the marketplace and from the owner's My Listings immediately.
+
+## Forgot password (free)
+
+The login page has a **Forgot password?** link. Enter the registered email and Broshare creates a one-time reset link that expires in 30 minutes; only a hash of the token is stored in MariaDB. After a reset, previously issued login sessions stop working.
+
+Existing databases need:
+
+```bash
+mariadb -u root -p broshare < backend/migrations/007_password_reset.sql
+```
+
+You do **not** need a paid email service. Two free options:
+
+1. **No email setup (local demo):** set `ALLOW_DEV_RESET_LINK=true` in `backend/.env` and leave the `SMTP_*` values unset. The reset link is printed in the backend terminal and shown on the forgot-password page. Never enable this on a public server — anyone could reset any account with it.
+2. **Real emails for free:** use any free SMTP account, e.g. a Gmail account: turn on 2-Step Verification, create an **App Password**, and set `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, `SMTP_USER`, `SMTP_PASS` (the app password), and `FRONTEND_URL` in `backend/.env`, then restart Express. Free tiers from providers such as Brevo or Resend work the same way with their SMTP details.
+
+If a student forgets **which email** they registered with, a reset link cannot be sent — ask an admin to find the account by name in the Admin Panel's Users tab and tell them the email.
+
+To test the whole flow against a disposable database, start the backend with `ALLOW_DEV_RESET_LINK=true` and no SMTP configured, then run `node tests/password-reset.mjs` from `backend/`.

@@ -1,0 +1,53 @@
+import nodemailer from 'nodemailer';
+
+// Free email sending: configure any SMTP account in backend/.env, for
+// example a Gmail account with an App Password
+// (SMTP_HOST=smtp.gmail.com, SMTP_PORT=465, SMTP_USER, SMTP_PASS).
+// Without SMTP settings no email is sent; the reset link is printed in the
+// backend terminal instead so the flow still works for local development.
+let transporter = null;
+if (process.env.SMTP_HOST) {
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: Number(process.env.SMTP_PORT) === 465,
+    auth: process.env.SMTP_USER
+      ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+      : undefined,
+  });
+}
+
+export async function sendPasswordResetEmail(to, resetLink) {
+  if (!transporter) {
+    console.log('\n================ Broshare password reset ================');
+    console.log(`No SMTP configured, so no email was sent.`);
+    console.log(`Reset link for ${to} (valid 30 minutes):`);
+    console.log(resetLink);
+    console.log('==========================================================\n');
+    return { delivered: false };
+  }
+
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM || process.env.SMTP_USER,
+    to,
+    subject: 'Reset your Broshare password',
+    text: [
+      'You asked to reset your Broshare password.',
+      '',
+      `Open this link within 30 minutes to choose a new password:`,
+      resetLink,
+      '',
+      'If you did not request this, you can ignore this email. Your password will not change.',
+    ].join('\n'),
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+        <h2 style="color:#059669;">Broshare password reset</h2>
+        <p>You asked to reset your Broshare password.</p>
+        <p><a href="${resetLink}" style="display:inline-block;background:#059669;color:#ffffff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:bold;">Reset my password</a></p>
+        <p style="color:#555;">This link expires in 30 minutes. If the button does not work, paste this address into your browser:</p>
+        <p style="word-break:break-all;color:#059669;">${resetLink}</p>
+        <p style="color:#555;">If you did not request this, you can ignore this email. Your password will not change.</p>
+      </div>`,
+  });
+  return { delivered: true };
+}
