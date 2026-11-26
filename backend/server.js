@@ -1,14 +1,14 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
-import authRoutes from './routes/auth.js';
-import itemRoutes from './routes/items.js';
-import messageRoutes from './routes/messages.js';
+import authRoutes from "./routes/auth.js";
+import itemRoutes from "./routes/items.js";
+import messageRoutes from "./routes/messages.js";
 import proposals from "./routes/proposals.js";
-import adminRoutes from './routes/admin.js';
+import adminRoutes from "./routes/admin.js";
 
 dotenv.config();
 
@@ -30,15 +30,15 @@ app.use("/uploads", express.static(join(__dirname, "uploads")));
 app.use("/api/auth", authRoutes);
 app.use("/api/proposals", proposals);
 app.use("/api/items", itemRoutes);
-app.use('/api/messages', messageRoutes);
-app.use('/api/admin', adminRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", message: "HostelBarter API is running!" });
+  res.json({ status: "ok", message: "Broshare API is running!" });
 });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`HostelBarter server running on http://localhost:${PORT}`);
+  console.log(`Broshare server running on http://localhost:${PORT}`);
 });
