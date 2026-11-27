@@ -1,4 +1,3 @@
-import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,8 +11,23 @@ dotenv.config({ path: join(dirname(fileURLToPath(import.meta.url)), '..', '.env'
 // (SMTP_HOST=smtp.gmail.com, SMTP_PORT=465, SMTP_USER, SMTP_PASS).
 // Without SMTP settings no email is sent; the reset link is printed in the
 // backend terminal instead so the flow still works for local development.
+// Email is optional: if the nodemailer package has not been installed yet
+// (run `npm install` in backend/), the server must still start — sending
+// just falls back to printing reset links in the terminal.
+let nodemailer = null;
+try {
+  nodemailer = (await import('nodemailer')).default;
+} catch {
+  console.warn('[mail] nodemailer is not installed; email sending is disabled. Run "npm install" in backend/.');
+}
+
 let transporter = null;
-if (process.env.SMTP_HOST) {
+if (nodemailer && process.env.SMTP_HOST) {
+  console.log(`[mail] SMTP configured: ${process.env.SMTP_HOST}:${process.env.SMTP_PORT || 587} as ${process.env.SMTP_USER || '(no user)'}`);
+} else if (nodemailer) {
+  console.log('[mail] SMTP not configured (SMTP_HOST missing from backend/.env); reset links will be printed in this terminal.');
+}
+if (nodemailer && process.env.SMTP_HOST) {
   transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT) || 587,

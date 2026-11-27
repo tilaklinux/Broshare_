@@ -2,6 +2,7 @@ import ListingPhoto from '../components/ListingPhoto.jsx';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { IncomingOffers } from '../components/Proposals.jsx';
+import { CATEGORIES } from '../utils/mockData.js';
 
 const categoryIcons = {
   Books: "📚",
@@ -18,6 +19,9 @@ function MyListings() {
   const [notice, setNotice] = useState("");
   const [uploadingId, setUploadingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({ title: "", description: "", category: "Other", looking_for: "" });
+  const [savingEdit, setSavingEdit] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchItems = async () => {
@@ -100,6 +104,48 @@ function MyListings() {
       setError(err.message || "Photo could not be uploaded.");
     } finally {
       setUploadingId(null);
+    }
+  };
+
+  const startEdit = (item) => {
+    setError("");
+    setNotice("");
+    setEditingId(item.id);
+    setEditForm({
+      title: item.title || "",
+      description: item.description || "",
+      category: item.category || "Other",
+      looking_for: item.looking_for || "",
+    });
+  };
+
+  const saveEdit = async (item) => {
+    setSavingEdit(true);
+    setError("");
+    setNotice("");
+    try {
+      const res = await fetch(`/api/items/${item.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("hostelbarter_token")}`,
+        },
+        body: JSON.stringify({
+          title: editForm.title.trim(),
+          description: editForm.description.trim(),
+          category: editForm.category,
+          looking_for: editForm.looking_for.trim(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "Listing could not be updated.");
+      setEditingId(null);
+      setNotice(`“${editForm.title.trim()}” was updated.`);
+      await fetchItems();
+    } catch (err) {
+      setError(err.message || "Listing could not be updated. Please try again.");
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -237,6 +283,12 @@ function MyListings() {
                       Mark Available
                     </button>
                   )}
+                  <button
+                    onClick={() => (editingId === item.id ? setEditingId(null) : startEdit(item))}
+                    className="text-xs bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg font-semibold hover:bg-indigo-100 transition-colors"
+                  >
+                    ✏️ Edit
+                  </button>
                   {item.image_url && (
                     <label className="text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg font-semibold hover:bg-blue-100 transition-colors cursor-pointer">
                       {uploadingId === item.id ? "Uploading…" : "🖼️ Update photo"}
@@ -260,6 +312,43 @@ function MyListings() {
                     {deletingId === item.id ? "Deleting…" : "Delete"}
                   </button>
                 </div>
+                {editingId === item.id && (
+                  <form
+                    className="mt-4 space-y-3 rounded-xl border border-indigo-100 bg-indigo-50/50 p-3"
+                    onSubmit={(e) => { e.preventDefault(); saveEdit(item); }}
+                  >
+                    <div>
+                      <label htmlFor={`edit-title-${item.id}`} className="block text-xs font-semibold text-gray-700 mb-1">Title</label>
+                      <input id={`edit-title-${item.id}`} className="input-field py-2" value={editForm.title} maxLength={255}
+                        onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} required />
+                    </div>
+                    <div>
+                      <label htmlFor={`edit-category-${item.id}`} className="block text-xs font-semibold text-gray-700 mb-1">Category</label>
+                      <select id={`edit-category-${item.id}`} className="input-field py-2" value={editForm.category}
+                        onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value }))}>
+                        {CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor={`edit-description-${item.id}`} className="block text-xs font-semibold text-gray-700 mb-1">Description</label>
+                      <textarea id={`edit-description-${item.id}`} className="input-field py-2" rows={3} value={editForm.description}
+                        onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))} required />
+                    </div>
+                    <div>
+                      <label htmlFor={`edit-looking-${item.id}`} className="block text-xs font-semibold text-gray-700 mb-1">Looking for</label>
+                      <input id={`edit-looking-${item.id}`} className="input-field py-2" value={editForm.looking_for} maxLength={255}
+                        onChange={(e) => setEditForm((f) => ({ ...f, looking_for: e.target.value }))} required />
+                    </div>
+                    <div className="flex gap-2">
+                      <button type="submit" disabled={savingEdit} className="btn-primary text-xs px-3 py-1.5">
+                        {savingEdit ? "Saving…" : "Save changes"}
+                      </button>
+                      <button type="button" onClick={() => setEditingId(null)} className="btn-secondary text-xs px-3 py-1.5">
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
             </div>
           ))}

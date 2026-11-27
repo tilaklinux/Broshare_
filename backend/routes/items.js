@@ -177,6 +177,42 @@ router.post('/:id/photo', authenticateToken, uploadPhoto, async (req, res) => {
 });
 
 // ============================================
+// PUT /api/items/:id
+// Edit the details of your own listing (title, description, category,
+// looking_for). The photo is changed separately via /:id/photo.
+// ============================================
+const LISTING_CATEGORIES = ['Books', 'Electronics', 'Accessories', 'Essentials', 'Other'];
+
+router.put('/:id', authenticateToken, async (req, res) => {
+  try {
+    const title = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
+    const description = typeof req.body?.description === 'string' ? req.body.description.trim() : '';
+    const category = req.body?.category;
+    const lookingFor = typeof req.body?.looking_for === 'string' ? req.body.looking_for.trim() : '';
+
+    if (!title || title.length > 255 || !description || !lookingFor || lookingFor.length > 255
+        || !LISTING_CATEGORIES.includes(category)) {
+      return res.status(400).json({
+        message: 'Enter a title, description, a valid category, and what you are looking for.',
+      });
+    }
+
+    const [result] = await db.query(
+      `UPDATE items SET title = ?, description = ?, category = ?, looking_for = ?
+       WHERE id = ? AND user_id = ? AND status <> 'deleted'`,
+      [title, description, category, lookingFor, req.params.id, req.user.id],
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ message: 'Listing not found for this account' });
+    }
+    return res.json({ message: 'Listing updated.' });
+  } catch (err) {
+    console.error('Edit listing failed:', err);
+    return res.status(500).json({ message: describeDbError(err, 'Could not update this listing. Please retry.') });
+  }
+});
+
+// ============================================
 // PUT /api/items/:id/status
 // Update item status (available/bartered)
 // ============================================

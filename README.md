@@ -78,7 +78,7 @@ Messages from before the migration are treated as already read, so counters star
 
 ## Managing your listings
 
-In **My Listings** you can **Update photo** on any listing to replace its picture (the old photo file is removed), upload a photo to a listing that has none, and **Delete** a listing you no longer need. Deleting removes the listing from the marketplace and your listings, deletes its photo file, and cancels pending proposals for it; completed-trade history stays readable. Only the owner can do any of this. To verify against a disposable database, run `node tests/listing-management.mjs` from `backend/`.
+In **My Listings** you can **Edit** a listing's title, description, category, and what you are looking for, **Update photo** on any listing to replace its picture (the old photo file is removed), upload a photo to a listing that has none, and **Delete** a listing you no longer need. Deleting removes the listing from the marketplace and your listings, deletes its photo file, and cancels pending proposals for it; completed-trade history stays readable. Only the owner can do any of this. To verify against a disposable database, run `node tests/listing-management.mjs` from `backend/`.
 
 ## Troubleshooting: listing deletion fails but photo deletion works
 
