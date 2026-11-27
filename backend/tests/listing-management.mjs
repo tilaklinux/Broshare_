@@ -71,6 +71,20 @@ try {
   let mine = await request('items/my-items', owner.token);
   assert.equal(mine.find((i) => i.id === itemId)?.image_url, second.image_url);
 
+  // The owner can edit the details; another student cannot, and invalid
+  // categories are rejected.
+  const edited = { title: `Steel kettle ${suffix}`, description: 'A steel kettle', category: 'Essentials', looking_for: 'Novels' };
+  await request(`items/${itemId}`, other.token, { method: 'PUT', status: 404, body: edited });
+  await request(`items/${itemId}`, owner.token, {
+    method: 'PUT', status: 400, body: { ...edited, category: 'Vehicles' },
+  });
+  await request(`items/${itemId}`, owner.token, { method: 'PUT', body: edited });
+  mine = await request('items/my-items', owner.token);
+  const afterEdit = mine.find((i) => i.id === itemId);
+  assert.equal(afterEdit.title, edited.title);
+  assert.equal(afterEdit.looking_for, 'Novels');
+  assert.ok((await request('items', null)).some((i) => i.id === itemId && i.title === edited.title));
+
   // Another student cannot update the photo or delete the listing.
   await uploadPhoto(other.token, itemId, 404);
   await request(`items/${itemId}`, other.token, { method: 'DELETE', status: 404 });
@@ -86,8 +100,10 @@ try {
   const [[row]] = await db.query('SELECT status, image_url FROM items WHERE id = ?', [itemId]);
   assert.deepEqual([row.status, row.image_url], ['deleted', null]);
 
-  // Deleting again is a clear error, not a silent success.
+  // Deleting again (or editing a deleted listing) is a clear error,
+  // not a silent success.
   await request(`items/${itemId}`, owner.token, { method: 'DELETE', status: 404 });
+  await request(`items/${itemId}`, owner.token, { method: 'PUT', status: 404, body: edited });
 
   console.log('Listing management checks passed.');
 } finally {
